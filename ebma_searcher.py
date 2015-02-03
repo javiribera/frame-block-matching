@@ -138,7 +138,7 @@ class EBMA_searcher():
         if acc == 1:
             pass
         elif acc == 2:
-            anchor_frame = cv.resize(anchor_frame, dsize=(width * 2, height * 2))
+            target_frame = cv.resize(target_frame, dsize=(width * 2, height * 2))
         else:
             raise ValueError('pixel accuracy should be 1 or 2. Got %s instead.' % acc)
 
