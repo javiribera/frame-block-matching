@@ -7,11 +7,11 @@ Tried in Python 2.7.5
 
 !! DEPENDENCIES !!
 This script depends on the following Python Packages:
-- argparse
-- scikit-image to save images
-- OpenCV to scale an image
-- numpy
-- matplotlib for quiver
+- argparse, to parse command line arguments
+- scikit-image, to save images
+- OpenCV, to scale an image
+- numpy, to speed up array manipulation
+- matplotlib, for quiver
 """
 
 import argparse
@@ -21,6 +21,7 @@ import math
 import sys
 
 import numpy as np
+
 
 sys.path.append('/usr/local/lib/python2.7/site-packages')
 import cv2 as cv
@@ -38,10 +39,10 @@ def main():
     parser = argparse.ArgumentParser(description='EBMA searcher. '
                                                  'Estimates the motion between to frame images '
                                                  ' by running an Exhaustive search Block Matching Algorithm (EBMA).')
-    parser.add_argument('--target-frame', dest='target_frame_path', required=True, type=str,
-                        help='Path to the frame that will be predicted.')
     parser.add_argument('--anchor-frame', dest='anchor_frame_path', required=True, type=str,
-                        help='Path to the frame that will be used to predict the target frame.')
+                        help='Path to the frame that will be predicted.')
+    parser.add_argument('--target-frame', dest='target_frame_path', required=True, type=str,
+                        help='Path to the frame that will be used to predict the anchor frame.')
     parser.add_argument('--frame-width', dest='frame_width', required=True, type=positive_integer,
                         help='Frame width.')
     parser.add_argument('--frame-height', dest='frame_height', required=True, type=positive_integer,
@@ -78,7 +79,7 @@ def main():
                  target_frame=target_frm)
 
     # store predicted frame
-    imsave('frames_of_interest/predicted_target.png', predicted_frm)
+    imsave('frames_of_interest/predicted_anchor.png', predicted_frm)
 
     motion_field_x = motion_field[:, :, 0]
     motion_field_y = motion_field[:, :, 1]
@@ -87,7 +88,7 @@ def main():
     show_quiver(motion_field_x, motion_field_y[::-1])
 
     # store error image
-    error_image = abs(np.array(predicted_frm, dtype=float) - np.array(target_frm, dtype=float))
+    error_image = abs(np.array(predicted_frm, dtype=float) - np.array(anchor_frm, dtype=float))
     error_image = np.array(error_image, dtype=np.uint8)
     imsave('frames_of_interest/error_image.png', error_image)
 
@@ -121,8 +122,8 @@ class EBMA_searcher():
     def run(self, anchor_frame, target_frame):
         """
         Run!
-        :param anchor_frame: Frame that will be used to predict the target frame.
-        :param target_frame: Frame that will be predicted.
+        :param anchor_frame: Image that will be predicted.
+        :param target_frame: Image that will be used to predict the target frame.
         :return: A tuple consisting of the predicted image and the motion field.
         """
 
@@ -141,8 +142,8 @@ class EBMA_searcher():
         else:
             raise ValueError('pixel accuracy should be 1 or 2. Got %s instead.' % acc)
 
-        # predicted frame. target_frame is predicted from anchor_frame
-        predicted_frame = np.empty(((height, width)), dtype=np.uint8)
+        # predicted frame. anchor_frame is predicted from target_frame
+        predicted_frame = np.empty((height, width), dtype=np.uint8)
 
         # motion field consisting in the displacement of each block in vertical and horizontal
         motion_field = np.empty((int(height / N), int(width / N), 2))
@@ -152,7 +153,7 @@ class EBMA_searcher():
                                                     xrange(0, width - (N - 1), N)):
 
             # block whose match will be searched in the anchor frame
-            blk = target_frame[blk_row:blk_row + N, blk_col:blk_col + N]
+            blk = anchor_frame[blk_row:blk_row + N, blk_col:blk_col + N]
 
             # minimum norm of the DFD norm found so far
             dfd_n_min = np.infty
@@ -170,7 +171,7 @@ class EBMA_searcher():
                     continue
 
                 # the candidate block may fall outside the anchor frame
-                candidate_blk = subarray(anchor_frame, up_l_candidate_blk, low_r_candidate_blk)[::acc, ::acc]
+                candidate_blk = subarray(target_frame, up_l_candidate_blk, low_r_candidate_blk)[::acc, ::acc]
                 assert candidate_blk.shape == (N, N)
 
                 dfd = np.array(candidate_blk, dtype=np.float16) - np.array(blk, dtype=np.float16)
