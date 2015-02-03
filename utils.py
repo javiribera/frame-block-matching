@@ -21,23 +21,6 @@ def positive_integer(number):
         raise argparse.ArgumentTypeError('%s is not a positive integer' % number)
 
 
-def read_binary_image(path, (height, width)):
-    """
-    Read binary gray-scale image. Each pixel is considered stored in contiguous bytes.
-    :param path: Path to the image to read.
-    :param (height, width): Height and width of the image.
-    :return: The numpy array containing the resulting image.
-    """
-
-    # open file in binary format
-    with open(path, "rb") as fd:
-        whole_file = fd.read(height * width)
-    pixels = np.array([ord(byte) for byte in whole_file], dtype=np.uint8)  # get ASCII value of each byte of the file
-    pixels = pixels.reshape((height, width))
-
-    return pixels
-
-
 def show_gray_img(asd):
     plt.imshow(asd, cmap='gray')
     plt.show()
@@ -101,7 +84,7 @@ def subarray(array, (upper_left_pix_row, upper_left_pix_col), (lower_right_pix_r
 
     # region of the final image that is inside the original image, and whose content will be taken from the orig im
     # (i = col, j=row)
-    #  _________________________________
+    # _________________________________
     # |                                | original image
     # |   _____________________________|____
     # |   |(j_f_1, i_f_1)              |    |

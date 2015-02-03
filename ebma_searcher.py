@@ -20,11 +20,14 @@ import itertools
 import numpy as np
 
 
+
+
+
 # import timeit
 
 from skimage.io import imsave
 
-from utils import positive_integer, read_binary_image, subarray, show_quiver
+from utils import positive_integer, subarray, show_quiver
 
 
 def main():
@@ -49,8 +52,10 @@ def main():
     args = parser.parse_args()
 
     # Pixel map of the frames in the [0,255] interval
-    target_frm = read_binary_image(args.target_frame_path, (args.frame_height, args.frame_width))
-    anchor_frm = read_binary_image(args.anchor_frame_path, (args.frame_height, args.frame_width))
+    target_frm = np.fromfile(args.target_frame_path, dtype=np.uint8, count=args.frame_height * args.frame_width)
+    anchor_frm = np.fromfile(args.anchor_frame_path, dtype=np.uint8, count=args.frame_height * args.frame_width)
+    target_frm = np.reshape(target_frm, (args.frame_height, args.frame_width))
+    anchor_frm = np.reshape(anchor_frm, (args.frame_height, args.frame_width))
 
     # store frames in PNG for our records
     os.system('mkdir -p frames_being_processed')
@@ -143,7 +148,7 @@ class EBMA_searcher():
                 candidate_blk = subarray(anchor_frame, up_l_candidate_blk, low_r_candidate_blk)
                 assert candidate_blk.shape == (N, N)
 
-                dfd = np.array(candidate_blk, dtype=np.float64) - np.array(blk, dtype=np.float64)
+                dfd = np.array(candidate_blk, dtype=np.float16) - np.array(blk, dtype=np.float16)
 
                 candidate_dfd_norm = np.linalg.norm(dfd, ord=p)
 
